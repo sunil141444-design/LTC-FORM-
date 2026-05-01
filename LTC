@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITBP LTC Form - T.R.-5C</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root { --primary: #1a5f7a; --secondary: #159895; --bg: #f8fafc; }
+        body { font-family: Arial, sans-serif; background-color: var(--bg); padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--primary); }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #eee; }
+        h1 { color: var(--primary); font-size: 22px; margin-bottom: 5px; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        h3 { color: var(--primary); border-left: 4px solid var(--secondary); padding-left: 10px; margin-top: 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+        .input-group { display: flex; flex-direction: column; margin-bottom: 10px; }
+        label { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background: #f4f4f4; font-size: 13px; }
+        .btn-add { background: var(--secondary); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .total-box { text-align: right; margin-top: 10px; font-size: 18px; font-weight: bold; color: var(--primary); }
+        .download-btn { width: 100%; background: var(--primary); color: white; padding: 15px; font-size: 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>छुट्टी यात्रा रियायत बिल (LTC Bill)</h1>
+        <p>भा०ति०पु०सी०बल लेखा-003 | T.R.-5C</p>
+    </div>
+
+    <div class="section">
+        <h3>व्यक्तिगत एवं बैंक विवरण</h3>
+        <div class="grid">
+            <div class="input-group"><label>Account No.</label><input type="text" id="acc"></div>
+            <div class="input-group"><label>IFSC</label><input type="text" id="ifsc"></div>
+            <div class="input-group"><label>नाम (Name)</label><input type="text" id="name"></div>
+            <div class="input-group"><label>पद (Rank)</label><input type="text" id="rank"></div>
+            <div class="input-group"><label>Regt No.</label><input type="text" id="regt"></div>
+            <div class="input-group"><label>Block Year</label><input type="text" id="block"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>6. कुटुम्ब के सदस्यों का विवरण</h3>
+        <table id="fTab">
+            <thead><tr><th>नाम</th><th>आयु</th><th>संबंध</th></tr></thead>
+            <tbody><tr><td><input type="text" style="width:90%"></td><td><input type="text" style="width:90%"></td><td><input type="text" style="width:90%"></td></tr></tbody>
+        </table>
+        <button class="btn-add" onclick="addF()">+ सदस्य जोड़ें</button>
+    </div>
+
+    <div class="section">
+        <h3>7. यात्रा का विवरण</h3>
+        <table id="jTab">
+            <thead><tr><th>प्रस्थान</th><th>आगमन</th><th>मोड</th><th>किराया (₹)</th></tr></thead>
+            <tbody><tr><td><input type="text" style="width:90%"></td><td><input type="text" style="width:90%"></td><td><input type="text" style="width:90%"></td><td><input type="number" class="f-in" oninput="calc()" style="width:90%"></td></tr></tbody>
+        </table>
+        <button class="btn-add" onclick="addJ()">+ यात्रा जोड़ें</button>
+        <div class="total-box">कुल योग: ₹ <span id="tDisp">0</span></div>
+    </div>
+
+    <button class="download-btn" onclick="gen()">PDF डाउनलोड करें ⬇️</button>
+</div>
+
+<script>
+    function addF(){ 
+        let r = document.getElementById('fTab').getElementsByTagName('tbody')[0].insertRow();
+        for(let i=0; i<3; i++) r.insertCell(i).innerHTML = '<input type="text" style="width:90%">';
+    }
+    function addJ(){
+        let r = document.getElementById('jTab').getElementsByTagName('tbody')[0].insertRow();
+        for(let i=0; i<4; i++){
+            let c = r.insertCell(i);
+            let inp = document.createElement('input');
+            inp.style.width = "90%";
+            if(i===3){ inp.type="number"; inp.className="f-in"; inp.oninput=calc; }
+            c.appendChild(inp);
+        }
+    }
+    function calc(){
+        let s = 0;
+        document.querySelectorAll('.f-in').forEach(i => s += Number(i.value) || 0);
+        document.getElementById('tDisp').innerText = s;
+    }
+    function gen(){
+        const { jsPDF } = window.jspdf;
+        const d = new jsPDF();
+        d.text("LTC BILL - ITBP ACCTTS-003", 105, 15, {align:"center"});
+        d.text("Name: " + document.getElementById('name').value, 14, 25);
+        d.text("Total: Rs. " + document.getElementById('tDisp').innerText, 14, 35);
+        
+        d.autoTable({ startY: 45, head: [['Name', 'Age', 'Relation']], 
+            body: Array.from(document.querySelectorAll('#fTab tbody tr')).map(tr => Array.from(tr.querySelectorAll('input')).map(i => i.value)) 
+        });
+
+        d.autoTable({ startY: d.lastAutoTable.finalY + 10, head: [['Dep', 'Arr', 'Mode', 'Fare']], 
+            body: Array.from(document.querySelectorAll('#jTab tbody tr')).map(tr => Array.from(tr.querySelectorAll('input')).map(i => i.value)) 
+        });
+        d.save("LTC_Form.pdf");
+    }
+</script>
+</body>
+</html>
